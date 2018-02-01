@@ -99,30 +99,41 @@ int main() {
     glDeleteShader(frag_shader);
 
     /* 1) Copy array into buffer for OpenGL */
-    float vertices[] = {
-        0.5f,  0.5f, 0.0f,  // top right
-        0.5f, -0.5f, 0.0f,  // bottom right
-        -0.5f, -0.5f, 0.0f,  // bottom left
-        -0.5f,  0.5f, 0.0f   // top left 
+    float vertices[] {
+         0.5f,  0.4f, 0.0f,  // top right
+         0.5f, -0.6f, 0.0f,  // bottom right
+        -0.5f, -0.6f, 0.0f,  // bottom left
     };
-    unsigned int indices[] = {
+    unsigned int indices[] {
         0, 1, 3,   // first triangle
         1, 2, 3    // second triangle
     };
+
+    float vert_2[]{
+        -0.5f,  0.6f, 0.0f,   // top left 
+        -0.5f,  -0.4f, 0.0f,  // bottom left
+         0.5f,  0.6f, 0.0f    // top right
+    };
     
     // OpenGL core requires vertex array object as well
-    // VAO stores the vertex attr config and which vbo to use
+    // VAO stores the vertex attr config and which VBO to use
     unsigned int vx_buf_obj, vx_array_obj, elem_buffer_obj;
     glGenVertexArrays(1, &vx_array_obj);
     glGenBuffers(1, &vx_buf_obj);
     glGenBuffers(1, &elem_buffer_obj);
+    
+
+    // For exercise: second vbo/vao for second triangle
+    unsigned int vx_buf_2, vx_array_2;
+    glGenVertexArrays(1, &vx_array_2);
+    glGenBuffers(1, &vx_buf_2);
 
     /* 1. bind VAO; only changes if object changes */
     glBindVertexArray(vx_array_obj);
     // Now any calls we make on GL_ARRAY_BUFFER will target vxBufObj
     glBindBuffer(GL_ARRAY_BUFFER, vx_buf_obj);
 
-    // Copies data into the bound buffer
+    // Copies vertex data for triangle 1 into the bound VBO
     // _DNYAMIC_DRAW will change a lot, _STREAM_DRAW changes every time its drawn
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW); 
 
@@ -131,9 +142,16 @@ int main() {
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
     /* 2) Set vertex attributes pointers */
-    // tell opengl how to interpret our vertex data (how it's packed in mem)
+    // tell opengl how to interpret our vertex data (how it's packed in the VBO)
     // Note stride can be left as zero if data is tightly packed
     // Note this is called when vx_buf_obj is bound to GL_ARRAY_BUFFER
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+
+    // For exercise: bind second triangle
+    glBindVertexArray(vx_array_2);
+    glBindBuffer(GL_ARRAY_BUFFER, vx_buf_2);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vert_2), vert_2, GL_STATIC_DRAW);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
@@ -157,10 +175,14 @@ int main() {
 
         // 4) activate program obj; draw the triangle
         glUseProgram(shader_program);
-        glBindVertexArray(vx_array_obj); // technically unneeded since there's only one VAO
+        glBindVertexArray(vx_array_obj);
+        glDrawArrays(GL_TRIANGLES, 0, 3);
+
+        // For exercise: draw second triangle
+        glBindVertexArray(vx_array_2);
+        glDrawArrays(GL_TRIANGLES, 0, 3);
         // Instead of drawing from array, specify we are drawing by indices
-        //glDrawArrays(GL_TRIANGLES, 0, 3);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0); 
+        //glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0); 
 
         /* glfw: swap buffers and poll I/O */
         // swap front and back buffer

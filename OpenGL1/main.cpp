@@ -12,13 +12,23 @@ void main() {
 }
 )"};
 
-// fragment shader
+// fragment shader, orange
 const char* frag_shader_src{ R"(
 #version 330 core
-out vec4 FragColor;
+out vec4 frag_color;
 
 void main() {
-    FragColor = vec4(1.f, 0.5f, 0.2f, 1.f);
+    frag_color = vec4(1.f, 0.5f, 0.2f, 1.f);
+}
+)" };
+
+// fragment shader, green
+const char* green_shader_src{ R"(
+#version 330 core
+out vec4 frag_color;
+
+void main() {
+    frag_color = vec4(0.f, 1.f, 0.f, 1.f);
 }
 )" };
 
@@ -94,9 +104,28 @@ int main() {
         std::cout << "ERROR [SHADER LINKING FAILED]\n" << info_log << std::endl;
     }
 
+    // For exercise: create second fragment shader of different color
+    unsigned int frag_shader_2{ glCreateShader(GL_FRAGMENT_SHADER) };
+    glShaderSource(frag_shader_2, 1, &green_shader_src, nullptr);
+    glCompileShader(frag_shader_2);
+
+    // Link second shader prg
+    unsigned int shader_2{ glCreateProgram() };
+    glAttachShader(shader_2, vx_shader);
+    glAttachShader(shader_2, frag_shader_2);
+    glLinkProgram(shader_2);
+
+    // check for linking errors
+    glGetProgramiv(shader_2, GL_LINK_STATUS, &success);
+    if (!success) {
+        glGetProgramInfoLog(shader_2, 512, nullptr, info_log);
+        std::cout << "ERROR [SHADER LINKING FAILED]\n" << info_log << std::endl;
+    }
+
     // shader objects are no longer needed in memory once linked
     glDeleteShader(vx_shader);
     glDeleteShader(frag_shader);
+    glDeleteShader(frag_shader_2);
 
     /* 1) Copy array into buffer for OpenGL */
     float vertices[] {
@@ -121,7 +150,6 @@ int main() {
     glGenVertexArrays(1, &vx_array_obj);
     glGenBuffers(1, &vx_buf_obj);
     glGenBuffers(1, &elem_buffer_obj);
-    
 
     // For exercise: second vbo/vao for second triangle
     unsigned int vx_buf_2, vx_array_2;
@@ -150,7 +178,7 @@ int main() {
 
     // For exercise: bind second triangle
     glBindVertexArray(vx_array_2);
-    glBindBuffer(GL_ARRAY_BUFFER, vx_buf_2);
+    glBindBuffer(GL_ARRAY_BUFFER, vx_buf_2); // drawing this array now draws this buffer
     glBufferData(GL_ARRAY_BUFFER, sizeof(vert_2), vert_2, GL_STATIC_DRAW);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
@@ -179,6 +207,8 @@ int main() {
         glDrawArrays(GL_TRIANGLES, 0, 3);
 
         // For exercise: draw second triangle
+        glUseProgram(shader_2);
+
         glBindVertexArray(vx_array_2);
         glDrawArrays(GL_TRIANGLES, 0, 3);
         // Instead of drawing from array, specify we are drawing by indices

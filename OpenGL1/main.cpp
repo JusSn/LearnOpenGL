@@ -99,17 +99,23 @@ int main() {
     glDeleteShader(frag_shader);
 
     /* 1) Copy array into buffer for OpenGL */
-    float vertices[]{
-        -0.5f, -0.5f, 0.f,
-        0.5f, -0.5f, 0.f,
-        0.f, 0.5f, 0.f
+    float vertices[] = {
+        0.5f,  0.5f, 0.0f,  // top right
+        0.5f, -0.5f, 0.0f,  // bottom right
+        -0.5f, -0.5f, 0.0f,  // bottom left
+        -0.5f,  0.5f, 0.0f   // top left 
+    };
+    unsigned int indices[] = {
+        0, 1, 3,   // first triangle
+        1, 2, 3    // second triangle
     };
     
     // OpenGL core requires vertex array object as well
     // VAO stores the vertex attr config and which vbo to use
-    unsigned int vx_buf_obj, vx_array_obj;
+    unsigned int vx_buf_obj, vx_array_obj, elem_buffer_obj;
     glGenVertexArrays(1, &vx_array_obj);
     glGenBuffers(1, &vx_buf_obj);
+    glGenBuffers(1, &elem_buffer_obj);
 
     /* 1. bind VAO; only changes if object changes */
     glBindVertexArray(vx_array_obj);
@@ -120,6 +126,10 @@ int main() {
     // _DNYAMIC_DRAW will change a lot, _STREAM_DRAW changes every time its drawn
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW); 
 
+    // Now set attributes for element buffer object
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elem_buffer_obj);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
     /* 2) Set vertex attributes pointers */
     // tell opengl how to interpret our vertex data (how it's packed in mem)
     // Note stride can be left as zero if data is tightly packed
@@ -127,10 +137,11 @@ int main() {
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
-    // 3) activate program obj
-    glUseProgram(shader_program);
+    // Note at this point, array buffer can be unbound. 
+    // Remember, DO NOT unbind the EBO while a VAO is active; bound EBO is stored within a VBO.
+    // VAO can be unbound afterwards so that later VAO calls won't modify the wrong one
 
-    // 4) Now set to draw the object
+    // 3) Now set to draw the object
 
     /* RENDER LOOP */
     while (!glfwWindowShouldClose(window)) { // returns true when window is closed by user
@@ -144,10 +155,12 @@ int main() {
         // fills colorbuffer with the color configured by glClearColor
         glClear(GL_COLOR_BUFFER_BIT);
 
-        // 3) activate program obj; draw the triangle
+        // 4) activate program obj; draw the triangle
         glUseProgram(shader_program);
         glBindVertexArray(vx_array_obj); // technically unneeded since there's only one VAO
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        // Instead of drawing from array, specify we are drawing by indices
+        //glDrawArrays(GL_TRIANGLES, 0, 3);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0); 
 
         /* glfw: swap buffers and poll I/O */
         // swap front and back buffer

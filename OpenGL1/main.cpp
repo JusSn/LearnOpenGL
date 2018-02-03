@@ -5,10 +5,13 @@
 // vertex shader raw text
 const char* vx_shader_src{ R"(
 #version 330 core
-layout (location = 0) in vec3 aPos;
+layout (location = 0) in vec3 a_pos; // position var has attr position 0
+
+out vec4 vertex_color; // color output piped to fragment shader
 
 void main() {
-    gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);
+    gl_Position = vec4(a_pos, 1.0); // directly provide vec3 to vec4 constructor
+    vertex_color = vec4(0.5, 0., 0., 1.); // dark red
 }
 )"};
 
@@ -17,18 +20,22 @@ const char* frag_shader_src{ R"(
 #version 330 core
 out vec4 frag_color;
 
+in vec4 vertex_color; // input from vx shader
+
 void main() {
-    frag_color = vec4(1.f, 0.5f, 0.2f, 1.f);
+    frag_color = vertex_color;
 }
 )" };
 
 // fragment shader, green
-const char* green_shader_src{ R"(
+const char* uniform_shader_src{ R"(
 #version 330 core
 out vec4 frag_color;
 
+uniform vec4 our_color; // set in OpenGL code
+
 void main() {
-    frag_color = vec4(0.f, 1.f, 0.f, 1.f);
+    frag_color = our_color;
 }
 )" };
 
@@ -106,7 +113,7 @@ int main() {
 
     // For exercise: create second fragment shader of different color
     unsigned int frag_shader_2{ glCreateShader(GL_FRAGMENT_SHADER) };
-    glShaderSource(frag_shader_2, 1, &green_shader_src, nullptr);
+    glShaderSource(frag_shader_2, 1, &uniform_shader_src, nullptr);
     glCompileShader(frag_shader_2);
 
     // Link second shader prg
@@ -207,7 +214,14 @@ int main() {
         glDrawArrays(GL_TRIANGLES, 0, 3);
 
         // For exercise: draw second triangle
+        // Change uniform color variable
+        float time_val = glfwGetTime(); // running time in seconds
+        float green_val = (sin(time_val) / 2.f) + 0.5f;
+        // find location in memory for updating
+        int vx_color_loc = glGetUniformLocation(shader_2, "our_color");
+        // updating a uniform sets the instance on the currently active shader program
         glUseProgram(shader_2);
+        glUniform4f(vx_color_loc, 0.f, green_val, 0.f, 1.f);
 
         glBindVertexArray(vx_array_2);
         glDrawArrays(GL_TRIANGLES, 0, 3);

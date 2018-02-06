@@ -1,32 +1,8 @@
+#include "Shader.h" // Custom shader class to quickly compile and link vertex + fragment shader
+
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
-
-// vertex shader raw text
-const char* vx_shader_src{ R"(
-#version 330 core
-layout (location = 0) in vec3 a_pos; // position var has attr position 0
-layout (location = 1) in vec3 a_color; // color is located in position 1
-
-out vec3 vertex_color; // color output piped to fragment shader
-
-void main() {
-    gl_Position = vec4(a_pos, 1.0); // directly provide vec3 to vec4 constructor
-    vertex_color = a_color;
-}
-)"};
-
-// fragment shader, rainbow
-const char* frag_shader_src{ R"(
-#version 330 core
-out vec4 frag_color;
-
-in vec3 vertex_color; // input from vx shader
-
-void main() {
-    frag_color = vec4(vertex_color, 1.0f);
-}
-)" };
 
 // Register callback on window that gets called every time window is resized
 void framebufferSizeCallback(GLFWwindow* window, int width, int height);
@@ -65,63 +41,8 @@ int main() {
 
     /* GPU Pipeline begins? */
 
-    /* create and compile vertex shader, used to transform coords to NDC */
-    unsigned int vx_shader{ glCreateShader(GL_VERTEX_SHADER) };
-
-    glShaderSource(vx_shader, 1, &vx_shader_src, nullptr);
-    glCompileShader(vx_shader);
-
-    // Check for vx shader compile errors
-    int success;
-    char info_log[512];
-    glGetShaderiv(vx_shader, GL_COMPILE_STATUS, &success);
-
-    if (!success) {
-        glGetShaderInfoLog(vx_shader, 512, nullptr, info_log);
-        std::cout << "ERROR [VERTEX SHADER COMPILATION FAILED]\n" << info_log << std::endl;
-    }
-
-    /* create and compile fragment shader, used to decide pixel color */
-    unsigned int frag_shader{ glCreateShader(GL_FRAGMENT_SHADER) };
-    glShaderSource(frag_shader, 1, &frag_shader_src, nullptr);
-    glCompileShader(frag_shader);
-
-    // Link both compiled shaders to shader program obj
-    // linking pipes output of one shader to input of the next
-    unsigned int shader_program{ glCreateProgram() };
-    glAttachShader(shader_program, vx_shader);
-    glAttachShader(shader_program, frag_shader);
-    glLinkProgram(shader_program);
-
-    // check for linking errors
-    glGetProgramiv(shader_program, GL_LINK_STATUS, &success);
-    if (!success) {
-        glGetProgramInfoLog(shader_program, 512, nullptr, info_log);
-        std::cout << "ERROR [SHADER LINKING FAILED]\n" << info_log << std::endl;
-    }
-
-    // For exercise: create second fragment shader of different color
-    //unsigned int frag_shader_2{ glCreateShader(GL_FRAGMENT_SHADER) };
-    //glShaderSource(frag_shader_2, 1, &uniform_shader_src, nullptr);
-    //glCompileShader(frag_shader_2);
-
-    // Link second shader prg
-    //unsigned int shader_2{ glCreateProgram() };
-    //glAttachShader(shader_2, vx_shader);
-    //glAttachShader(shader_2, frag_shader_2);
-    //glLinkProgram(shader_2);
-
-    // check for linking errors
-    //glGetProgramiv(shader_2, GL_LINK_STATUS, &success);
-    //if (!success) {
-    //    glGetProgramInfoLog(shader_2, 512, nullptr, info_log);
-    //    std::cout << "ERROR [SHADER LINKING FAILED]\n" << info_log << std::endl;
-    //}
-
-    // shader objects are no longer needed in memory once linked
-    glDeleteShader(vx_shader);
-    glDeleteShader(frag_shader);
-    //glDeleteShader(frag_shader_2);
+    // Create vertex and fragment shaders from file; compile and link into shader program
+    Shader shader_program{ "shader0.vert", "shader0.frag" };
 
     /* 1) Copy array into buffer for OpenGL */
     float vertices[] = {
@@ -204,7 +125,7 @@ int main() {
         glClear(GL_COLOR_BUFFER_BIT);
 
         // 4) activate program obj; draw the triangle
-        glUseProgram(shader_program);
+        shader_program.use();
         glBindVertexArray(vx_array_obj);
         glDrawArrays(GL_TRIANGLES, 0, 3);
 

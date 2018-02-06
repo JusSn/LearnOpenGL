@@ -1,3 +1,8 @@
+/*
+Shader class to read GLSL from file and build shader programs
+Based off example from https://learnopengl.com/Getting-started/Shaders
+*/
+
 #include "Shader.h"
 
 #include <glad/glad.h>

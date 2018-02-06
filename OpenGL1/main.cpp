@@ -6,36 +6,25 @@
 const char* vx_shader_src{ R"(
 #version 330 core
 layout (location = 0) in vec3 a_pos; // position var has attr position 0
+layout (location = 1) in vec3 a_color; // color is located in position 1
 
-out vec4 vertex_color; // color output piped to fragment shader
+out vec3 vertex_color; // color output piped to fragment shader
 
 void main() {
     gl_Position = vec4(a_pos, 1.0); // directly provide vec3 to vec4 constructor
-    vertex_color = vec4(0.5, 0., 0., 1.); // dark red
+    vertex_color = a_color;
 }
 )"};
 
-// fragment shader, orange
+// fragment shader, rainbow
 const char* frag_shader_src{ R"(
 #version 330 core
 out vec4 frag_color;
 
-in vec4 vertex_color; // input from vx shader
+in vec3 vertex_color; // input from vx shader
 
 void main() {
-    frag_color = vertex_color;
-}
-)" };
-
-// fragment shader, green
-const char* uniform_shader_src{ R"(
-#version 330 core
-out vec4 frag_color;
-
-uniform vec4 our_color; // set in OpenGL code
-
-void main() {
-    frag_color = our_color;
+    frag_color = vec4(vertex_color, 1.0f);
 }
 )" };
 
@@ -112,56 +101,57 @@ int main() {
     }
 
     // For exercise: create second fragment shader of different color
-    unsigned int frag_shader_2{ glCreateShader(GL_FRAGMENT_SHADER) };
-    glShaderSource(frag_shader_2, 1, &uniform_shader_src, nullptr);
-    glCompileShader(frag_shader_2);
+    //unsigned int frag_shader_2{ glCreateShader(GL_FRAGMENT_SHADER) };
+    //glShaderSource(frag_shader_2, 1, &uniform_shader_src, nullptr);
+    //glCompileShader(frag_shader_2);
 
     // Link second shader prg
-    unsigned int shader_2{ glCreateProgram() };
-    glAttachShader(shader_2, vx_shader);
-    glAttachShader(shader_2, frag_shader_2);
-    glLinkProgram(shader_2);
+    //unsigned int shader_2{ glCreateProgram() };
+    //glAttachShader(shader_2, vx_shader);
+    //glAttachShader(shader_2, frag_shader_2);
+    //glLinkProgram(shader_2);
 
     // check for linking errors
-    glGetProgramiv(shader_2, GL_LINK_STATUS, &success);
-    if (!success) {
-        glGetProgramInfoLog(shader_2, 512, nullptr, info_log);
-        std::cout << "ERROR [SHADER LINKING FAILED]\n" << info_log << std::endl;
-    }
+    //glGetProgramiv(shader_2, GL_LINK_STATUS, &success);
+    //if (!success) {
+    //    glGetProgramInfoLog(shader_2, 512, nullptr, info_log);
+    //    std::cout << "ERROR [SHADER LINKING FAILED]\n" << info_log << std::endl;
+    //}
 
     // shader objects are no longer needed in memory once linked
     glDeleteShader(vx_shader);
     glDeleteShader(frag_shader);
-    glDeleteShader(frag_shader_2);
+    //glDeleteShader(frag_shader_2);
 
     /* 1) Copy array into buffer for OpenGL */
-    float vertices[] {
-         0.5f,  0.4f, 0.0f,  // top right
-         0.5f, -0.6f, 0.0f,  // bottom right
-        -0.5f, -0.6f, 0.0f,  // bottom left
+    float vertices[] = {
+        // positions         // colors
+        0.5f, -0.5f, 0.0f,  1.0f, 0.0f, 0.0f,   // bottom right
+        -0.5f, -0.5f, 0.0f,  0.0f, 1.0f, 0.0f,   // bottom left
+        0.0f,  0.5f, 0.0f,  0.0f, 0.0f, 1.0f    // top 
     };
-    unsigned int indices[] {
-        0, 1, 3,   // first triangle
-        1, 2, 3    // second triangle
-    };
+    //unsigned int indices[] {
+    //    0, 1, 3,   // first triangle
+    //    1, 2, 3    // second triangle
+    //};
 
-    float vert_2[]{
-        -0.5f,  0.6f, 0.0f,   // top left 
-        -0.5f,  -0.4f, 0.0f,  // bottom left
-         0.5f,  0.6f, 0.0f    // top right
-    };
+    //float vert_2[]{
+    //    -0.5f,  0.6f, 0.0f,   // top left 
+    //    -0.5f,  -0.4f, 0.0f,  // bottom left
+    //     0.5f,  0.6f, 0.0f    // top right
+    //};
     
     // OpenGL core requires vertex array object as well
     // VAO stores the vertex attr config and which VBO to use
-    unsigned int vx_buf_obj, vx_array_obj, elem_buffer_obj;
+    unsigned int vx_buf_obj, vx_array_obj;// elem_buffer_obj;
     glGenVertexArrays(1, &vx_array_obj);
     glGenBuffers(1, &vx_buf_obj);
-    glGenBuffers(1, &elem_buffer_obj);
+    //glGenBuffers(1, &elem_buffer_obj);
 
     // For exercise: second vbo/vao for second triangle
-    unsigned int vx_buf_2, vx_array_2;
-    glGenVertexArrays(1, &vx_array_2);
-    glGenBuffers(1, &vx_buf_2);
+    //unsigned int vx_buf_2, vx_array_2;
+    //glGenVertexArrays(1, &vx_array_2);
+    //glGenBuffers(1, &vx_buf_2);
 
     /* 1. bind VAO; only changes if object changes */
     glBindVertexArray(vx_array_obj);
@@ -173,22 +163,27 @@ int main() {
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW); 
 
     // Now set attributes for element buffer object
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elem_buffer_obj);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+    //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elem_buffer_obj);
+    //glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
     /* 2) Set vertex attributes pointers */
     // tell opengl how to interpret our vertex data (how it's packed in the VBO)
     // Note stride can be left as zero if data is tightly packed
     // Note this is called when vx_buf_obj is bound to GL_ARRAY_BUFFER
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+
+    // Set position attribute from idx 0
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
+    // Set color attribute from idx 1; specify the attribute offset
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
 
     // For exercise: bind second triangle
-    glBindVertexArray(vx_array_2);
-    glBindBuffer(GL_ARRAY_BUFFER, vx_buf_2); // drawing this array now draws this buffer
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vert_2), vert_2, GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
+    //glBindVertexArray(vx_array_2);
+    //glBindBuffer(GL_ARRAY_BUFFER, vx_buf_2); // drawing this array now draws this buffer
+    //glBufferData(GL_ARRAY_BUFFER, sizeof(vert_2), vert_2, GL_STATIC_DRAW);
+    //glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    //glEnableVertexAttribArray(0);
 
     // Note at this point, array buffer can be unbound. 
     // Remember, DO NOT unbind the EBO while a VAO is active; bound EBO is stored within a VBO.
@@ -215,16 +210,16 @@ int main() {
 
         // For exercise: draw second triangle
         // Change uniform color variable
-        float time_val = glfwGetTime(); // running time in seconds
-        float green_val = (sin(time_val) / 2.f) + 0.5f;
+        //float time_val = glfwGetTime(); // running time in seconds
+        //float green_val = (sin(time_val) / 2.f) + 0.5f;
         // find location in memory for updating
-        int vx_color_loc = glGetUniformLocation(shader_2, "our_color");
+        //int vx_color_loc = glGetUniformLocation(shader_2, "our_color");
         // updating a uniform sets the instance on the currently active shader program
-        glUseProgram(shader_2);
-        glUniform4f(vx_color_loc, 0.f, green_val, 0.f, 1.f);
+        //glUseProgram(shader_2);
+        //glUniform4f(vx_color_loc, 0.f, green_val, 0.f, 1.f);
 
-        glBindVertexArray(vx_array_2);
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        //glBindVertexArray(vx_array_2);
+        //glDrawArrays(GL_TRIANGLES, 0, 3);
         // Instead of drawing from array, specify we are drawing by indices
         //glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0); 
 

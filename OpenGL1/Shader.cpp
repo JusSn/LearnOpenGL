@@ -112,6 +112,6 @@ const string readFileToString(const char* filepath) {
         return shader_stream.str();
     }
     catch (ifstream::failure& e) {
-        std::cout << "ERROR [SHADER FILE NOT READ]" << std::endl;
+        std::cout << "ERROR [SHADER FILE NOT READ]\n" << filepath << std::endl;
     }
 }

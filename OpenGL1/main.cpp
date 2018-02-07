@@ -56,23 +56,12 @@ int main() {
     //    1, 2, 3    // second triangle
     //};
 
-    //float vert_2[]{
-    //    -0.5f,  0.6f, 0.0f,   // top left 
-    //    -0.5f,  -0.4f, 0.0f,  // bottom left
-    //     0.5f,  0.6f, 0.0f    // top right
-    //};
-    
     // OpenGL core requires vertex array object as well
     // VAO stores the vertex attr config and which VBO to use
     unsigned int vx_buf_obj, vx_array_obj;// elem_buffer_obj;
     glGenVertexArrays(1, &vx_array_obj);
     glGenBuffers(1, &vx_buf_obj);
     //glGenBuffers(1, &elem_buffer_obj);
-
-    // For exercise: second vbo/vao for second triangle
-    //unsigned int vx_buf_2, vx_array_2;
-    //glGenVertexArrays(1, &vx_array_2);
-    //glGenBuffers(1, &vx_buf_2);
 
     /* 1. bind VAO; only changes if object changes */
     glBindVertexArray(vx_array_obj);
@@ -99,13 +88,6 @@ int main() {
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
 
-    // For exercise: bind second triangle
-    //glBindVertexArray(vx_array_2);
-    //glBindBuffer(GL_ARRAY_BUFFER, vx_buf_2); // drawing this array now draws this buffer
-    //glBufferData(GL_ARRAY_BUFFER, sizeof(vert_2), vert_2, GL_STATIC_DRAW);
-    //glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-    //glEnableVertexAttribArray(0);
-
     // Note at this point, array buffer can be unbound. 
     // Remember, DO NOT unbind the EBO while a VAO is active; bound EBO is stored within a VBO.
     // VAO can be unbound afterwards so that later VAO calls won't modify the wrong one
@@ -128,21 +110,6 @@ int main() {
         shader_program.use();
         glBindVertexArray(vx_array_obj);
         glDrawArrays(GL_TRIANGLES, 0, 3);
-
-        // For exercise: draw second triangle
-        // Change uniform color variable
-        //float time_val = glfwGetTime(); // running time in seconds
-        //float green_val = (sin(time_val) / 2.f) + 0.5f;
-        // find location in memory for updating
-        //int vx_color_loc = glGetUniformLocation(shader_2, "our_color");
-        // updating a uniform sets the instance on the currently active shader program
-        //glUseProgram(shader_2);
-        //glUniform4f(vx_color_loc, 0.f, green_val, 0.f, 1.f);
-
-        //glBindVertexArray(vx_array_2);
-        //glDrawArrays(GL_TRIANGLES, 0, 3);
-        // Instead of drawing from array, specify we are drawing by indices
-        //glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0); 
 
         /* glfw: swap buffers and poll I/O */
         // swap front and back buffer

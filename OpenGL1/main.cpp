@@ -132,7 +132,7 @@ int main() {
         // fills colorbuffer with the color configured by glClearColor
         glClear(GL_COLOR_BUFFER_BIT);
 
-        // 4) activate program obj; draw the triangle
+        // 4) activate program obj; draw the triangles
         shader_program.use();
         glBindVertexArray(vx_array_obj);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);

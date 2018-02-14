@@ -6,8 +6,10 @@ layout (location = 2) in vec2 a_tex_coord; // texture coordinates in pos 2
 out vec3 vertex_color; // color output piped to fragment shader
 out vec2 tex_coord;
 
+uniform mat4 trans;
+
 void main() {
-    gl_Position = vec4(a_pos, 1.0); // directly provide vec3 to vec4 constructor
+    gl_Position = trans * vec4(a_pos, 1.0); // transform position by provided uniform
     vertex_color = a_color;
 	tex_coord = a_tex_coord;
 }

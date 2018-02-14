@@ -5,6 +5,12 @@
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+
+// opengl math library
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 #include <iostream>
 
 // Register callback on window that gets called every time window is resized
@@ -14,7 +20,7 @@ static void framebufferSizeCallback(GLFWwindow* window, int width, int height);
 static void processInput(GLFWwindow* window);
 
 // load an image into currently bound texture
-static unsigned int createTexture(GLenum tex_unit, char* filename);
+static unsigned int createTexture2D(GLenum tex_unit, char* filename);
 
 int main() {
     glfwInit();
@@ -48,10 +54,10 @@ int main() {
     /* Textures */
 
     // Generate ogl texture object
-    unsigned int container_tex{ createTexture(GL_TEXTURE0, "container.jpg") };
+    unsigned int container_tex{ createTexture2D(GL_TEXTURE0, "container.jpg") };
 
     // load second image
-    unsigned int face_tex{ createTexture(GL_TEXTURE1, "awesomeface.png") };
+    unsigned int face_tex{ createTexture2D(GL_TEXTURE1, "awesomeface.png") };
 
     /* GPU Pipeline begins? */
 
@@ -132,8 +138,14 @@ int main() {
         // fills colorbuffer with the color configured by glClearColor
         glClear(GL_COLOR_BUFFER_BIT);
 
-        // 4) activate program obj; draw the triangles
+        // Set up transformation matrix 
+        // remember that transformations are applied in reverse order from code
+        auto trans = glm::translate(glm::mat4{ 1.f }, glm::vec3{ 0.5f, -0.5f, 0.f });
+        trans = glm::rotate(trans, (float)glfwGetTime(), glm::vec3{ 0.f, 0.f, 1.f });
+
+        // 4) activate program obj; update transform matrix and draw the triangles
         shader_program.use();
+        shader_program.setMatrix4("trans", trans);
         glBindVertexArray(vx_array_obj);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
@@ -165,7 +177,7 @@ void processInput(GLFWwindow* window) {
 }
 
 // load an image into currently bound texture
-unsigned int createTexture(GLenum tex_unit, char* filename) {
+unsigned int createTexture2D(GLenum tex_unit, char* filename) {
     unsigned int tex;
     glGenTextures(1, &tex);
     // Specify texture unit this image will occupy

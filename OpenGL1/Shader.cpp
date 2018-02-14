@@ -11,6 +11,8 @@ Based off example from https://learnopengl.com/Getting-started/Shaders
 #include <sstream>
 #include <iostream>
 
+#include <glm/gtc/type_ptr.hpp>
+
 using std::string;
 using std::ifstream;
 
@@ -90,6 +92,9 @@ void Shader::setInt(const char* name, int val) const {
 void Shader::setFloat(const char* name, float val) const {
     glUniform1f(glGetUniformLocation(id, name), val);
 }
+void Shader::setMatrix4(const char* name, glm::mat4 trans) {
+    glUniformMatrix4fv(glGetUniformLocation(id, name), 1, GL_FALSE, glm::value_ptr(trans));
+}
 
 /* Non-memeber helper implementation */
 
@@ -112,6 +117,6 @@ const string readFileToString(const char* filepath) {
         return shader_stream.str();
     }
     catch (ifstream::failure& e) {
-        std::cout << "ERROR [SHADER FILE NOT READ]\n" << filepath << std::endl;
+        std::cout << "ERROR [ " << e.what() << " ]\n" << filepath << std::endl;
     }
 }

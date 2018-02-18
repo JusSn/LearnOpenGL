@@ -1,15 +1,14 @@
 #version 330 core
 layout (location = 0) in vec3 a_pos; // position var has attr position 0
-layout (location = 1) in vec3 a_color; // color is located in position 1
-layout (location = 2) in vec2 a_tex_coord; // texture coordinates in pos 2
+layout (location = 1) in vec2 a_tex_coord; // texture coordinates in pos 1
 
-out vec3 vertex_color; // color output piped to fragment shader
-out vec2 tex_coord;
+out vec2 tex_coord; // Pipe texture coordinates to fragment shader
 
-uniform mat4 trans;
+uniform mat4 model;
+uniform mat4 view;
+uniform mat4 proj;
 
 void main() {
-    gl_Position = trans * vec4(a_pos, 1.0); // transform position by provided uniform
-    vertex_color = a_color;
+    gl_Position = proj * view * model * vec4(a_pos, 1.0); // transform closest to vector is applied first
 	tex_coord = a_tex_coord;
 }

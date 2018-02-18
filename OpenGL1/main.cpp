@@ -13,6 +13,10 @@
 
 #include <iostream>
 
+// Viewport dimensions
+static const int WIDTH{ 800 };
+static const int HEIGHT{ 600 };
+
 // Register callback on window that gets called every time window is resized
 static void framebufferSizeCallback(GLFWwindow* window, int width, int height);
 
@@ -33,7 +37,7 @@ int main() {
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     // Create window obj
-    GLFWwindow* window = glfwCreateWindow(800, 600, "LearnOpenGL", nullptr, nullptr);
+    GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "LearnOpenGL", nullptr, nullptr);
     if (!window) {
         std::cout << "Failed to create GLFW window!" << std::endl;
         glfwTerminate();
@@ -66,25 +70,69 @@ int main() {
 
     /* 1) Copy array into buffer for OpenGL */
 
-    // Rectangle for texture tutorial
-    float vertices[] = {
-        // positions          // colors           // texture coords
-        0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f,   // top right
-        0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f,   // bottom right
-        -0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f,   // bottom left
-        -0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 1.0f    // top left 
+    // Cube for texture tutorial. Stores local space vertices and texture coords
+    float vertices[] {
+        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+        0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
+        0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+        0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+
+        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+        0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+        0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+        0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+        -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+
+        -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+        -0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+        -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+        0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+        0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+        0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+        0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+        0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+        0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+        0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
+        0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+        0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+
+        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+        0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+        0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+        0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+        -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
+        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
     };
-    unsigned int indices[] {
-        0, 1, 3,   // first triangle
-        1, 2, 3    // second triangle
+    // Supply 10 locations for 10 cubes
+    glm::vec3 cubePositions[] {
+        glm::vec3(0.0f,  0.0f,  0.0f),
+        glm::vec3(2.0f,  5.0f, -15.0f),
+        glm::vec3(-1.5f, -2.2f, -2.5f),
+        glm::vec3(-3.8f, -2.0f, -12.3f),
+        glm::vec3(2.4f, -0.4f, -3.5f),
+        glm::vec3(-1.7f,  3.0f, -7.5f),
+        glm::vec3(1.3f, -2.0f, -2.5f),
+        glm::vec3(1.5f,  2.0f, -2.5f),
+        glm::vec3(1.5f,  0.2f, -1.5f),
+        glm::vec3(-1.3f,  1.0f, -1.5f)
     };
 
     // OpenGL core requires vertex array object as well
     // VAO stores the vertex attr config and which VBO to use
-    unsigned int vx_buf_obj, vx_array_obj, elem_buffer_obj;
+    unsigned int vx_buf_obj, vx_array_obj;
     glGenVertexArrays(1, &vx_array_obj);
     glGenBuffers(1, &vx_buf_obj);
-    glGenBuffers(1, &elem_buffer_obj);
 
     /* 1. bind VAO; only changes if object changes */
     glBindVertexArray(vx_array_obj);
@@ -95,24 +143,17 @@ int main() {
     // _DNYAMIC_DRAW will change a lot, _STREAM_DRAW changes every time its drawn
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW); 
 
-    // Now set attributes for element buffer object
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elem_buffer_obj);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-
     /* 2) Set vertex attributes pointers */
     // tell opengl how to interpret our vertex data (how it's packed in the VBO)
     // Note stride can be left as zero if data is tightly packed
     // Note this is called when vx_buf_obj is bound to GL_ARRAY_BUFFER
 
     // Set position attribute from idx 0
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
-    // Set color attribute from idx 1; specify the attribute offset
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+    // Set texture attribute from idx 1; specify the attribute offset
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
-    // Notify OGL of texture attribute from idx 2
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
-    glEnableVertexAttribArray(2);
 
     // Note at this point, array buffer can be unbound. 
     // Remember, DO NOT unbind the EBO while a VAO is active; bound EBO is stored within a VBO.
@@ -126,6 +167,9 @@ int main() {
     shader_program.setInt("texture1", 0); // Active texture 0
     shader_program.setInt("texture2", 1);
 
+    // Tell opengl not to draw obscured vertices
+    glEnable(GL_DEPTH_TEST);
+
     /* RENDER LOOP */
     while (!glfwWindowShouldClose(window)) { // returns true when window is closed by user
         // check for user input
@@ -136,18 +180,33 @@ int main() {
         // Let's clear the screen with a greenish-blue; set clear color
         glClearColor(0.2f, 0.3f, 0.3f, 1.f);
         // fills colorbuffer with the color configured by glClearColor
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // Set up transformation matrix 
         // remember that transformations are applied in reverse order from code
-        auto trans = glm::translate(glm::mat4{ 1.f }, glm::vec3{ 0.5f, -0.5f, 0.f });
-        trans = glm::rotate(trans, (float)glfwGetTime(), glm::vec3{ 0.f, 0.f, 1.f });
+        // b) View Transform
+        auto view = glm::translate(glm::mat4{ 1.f }, glm::vec3{ 0.f, 0.f, -3.f });
+        // c) Projection Transform: FOV, aspect ratio, near clipping plane, far clipping plane
+        auto proj = glm::perspective(glm::radians(45.f), (float)WIDTH / HEIGHT, 0.1f, 100.f);
 
-        // 4) activate program obj; update transform matrix and draw the triangles
-        shader_program.use();
-        shader_program.setMatrix4("trans", trans);
         glBindVertexArray(vx_array_obj);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+        // 4) activate program obj; update transform matrices in vertex shader
+        shader_program.use();
+        shader_program.setMatrix4("view", view);
+        shader_program.setMatrix4("proj", proj);
+        
+        // 5) Draw each cube each with a different rotation
+        for (int i{}; i < 10; ++i) {
+            // a) Model Transform
+            auto model = glm::translate(glm::mat4{ 1.f }, cubePositions[i]);
+            // angle of rotation, and arbitrary axis. Rotate over time
+            float angle{ 20.f * (i + 1) };
+            model = glm::rotate(model, (float)glfwGetTime() * glm::radians(angle), glm::vec3{ 1.f, 0.3f, 0.5f });
+            shader_program.setMatrix4("model", model);
+
+            glDrawArrays(GL_TRIANGLES, 0, 36);
+        }
 
         /* glfw: swap buffers and poll I/O */
         // swap front and back buffer

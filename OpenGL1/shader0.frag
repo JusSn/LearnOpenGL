@@ -1,7 +1,6 @@
 #version 330 core
 out vec4 frag_color;
 
-in vec3 vertex_color; // input from vx shader
 in vec2 tex_coord; // texture coordinates
 
 //fragment shader is the one that actually sets pixels to corresponding color from texture

@@ -1,6 +1,7 @@
 /* Code based off tutorials from https://learnopengl.com */
 
 #include "Shader.h" // Custom shader class to quickly compile and link vertex + fragment shader
+#include "Camera.h"
 #include "stb_image_.h" // Sean Barret's image loader lib
 
 #include <glad/glad.h>
@@ -14,17 +15,21 @@
 #include <iostream>
 
 // Viewport dimensions
-static const int WIDTH{ 800 };
-static const int HEIGHT{ 600 };
+const int kWidth{ 800 };
+const int kHeight{ 600 };
 
 // Register callback on window that gets called every time window is resized
-static void framebufferSizeCallback(GLFWwindow* window, int width, int height);
+static void FramebufferSizeCallback(GLFWwindow* window, int width, int height);
+// Register mouse position callback
+static void MouseCallback(GLFWwindow* window, double x_pos, double y_pos);
+// Register mouse scroll callback
+static void ScrollCallback(GLFWwindow* window, double x_offset, double y_offset);
 
 // Process input during render loop
-static void processInput(GLFWwindow* window);
+static void ProcessInput(GLFWwindow* window, double delta_time);
 
 // load an image into currently bound texture
-static unsigned int createTexture2D(GLenum tex_unit, char* filename);
+static unsigned int CreateTexture2D(GLenum tex_unit, char* filename);
 
 int main() {
     glfwInit();
@@ -37,7 +42,7 @@ int main() {
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     // Create window obj
-    GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "LearnOpenGL", nullptr, nullptr);
+    GLFWwindow* window = glfwCreateWindow(kWidth, kHeight, "LearnOpenGL", nullptr, nullptr);
     if (!window) {
         std::cout << "Failed to create GLFW window!" << std::endl;
         glfwTerminate();
@@ -47,21 +52,25 @@ int main() {
     glfwMakeContextCurrent(window);
 
     // Must initialize GLAD before calling OpenGL funcs, since GLAD manages func ptrs
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+    if (!gladLoadGLLoader(reinterpret_cast<GLADloadproc>(glfwGetProcAddress))) {
         std::cout << "Failed to init GLAD!" << std::endl;
         return -1;
     }
 
-    // Register window resizing callback function
-    glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
+    // Capture cursor
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    // Register callback functions
+    glfwSetFramebufferSizeCallback(window, FramebufferSizeCallback);
+    glfwSetCursorPosCallback(window, MouseCallback);
+    glfwSetScrollCallback(window, ScrollCallback);
     
     /* Textures */
 
     // Generate ogl texture object
-    unsigned int container_tex{ createTexture2D(GL_TEXTURE0, "container.jpg") };
+    unsigned int container_tex{ CreateTexture2D(GL_TEXTURE0, "container.jpg") };
 
     // load second image
-    unsigned int face_tex{ createTexture2D(GL_TEXTURE1, "awesomeface.png") };
+    unsigned int face_tex{ CreateTexture2D(GL_TEXTURE1, "awesomeface.png") };
 
     /* GPU Pipeline begins? */
 
@@ -149,10 +158,10 @@ int main() {
     // Note this is called when vx_buf_obj is bound to GL_ARRAY_BUFFER
 
     // Set position attribute from idx 0
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), reinterpret_cast<void*>(0));
     glEnableVertexAttribArray(0);
     // Set texture attribute from idx 1; specify the attribute offset
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), reinterpret_cast<void*>(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
 
     // Note at this point, array buffer can be unbound. 
@@ -163,17 +172,27 @@ int main() {
 
     // Set texture unit sampler uniforms
     // Must activate the shader program before setting uniforms!
-    shader_program.use();
-    shader_program.setInt("texture1", 0); // Active texture 0
-    shader_program.setInt("texture2", 1);
+    shader_program.Use();
+    shader_program.SetInt("texture1", 0); // Active texture 0
+    shader_program.SetInt("texture2", 1);
 
     // Tell opengl not to draw obscured vertices
     glEnable(GL_DEPTH_TEST);
 
     /* RENDER LOOP */
+
+    // track deltaTime
+    double delta_time{};
+    double last_frame_time{}; 
+
     while (!glfwWindowShouldClose(window)) { // returns true when window is closed by user
+        // update deltaTime
+        double current_frame_time{ glfwGetTime() };
+        delta_time = current_frame_time - last_frame_time;
+        last_frame_time = current_frame_time;
+
         // check for user input
-        processInput(window);
+        ProcessInput(window, delta_time);
 
         /* RENDERING COMMANDS GO HERE */
 
@@ -185,16 +204,16 @@ int main() {
         // Set up transformation matrix 
         // remember that transformations are applied in reverse order from code
         // b) View Transform
-        auto view = glm::translate(glm::mat4{ 1.f }, glm::vec3{ 0.f, 0.f, -3.f });
+        auto view = Camera::GetInstance().GetViewTransform();
         // c) Projection Transform: FOV, aspect ratio, near clipping plane, far clipping plane
-        auto proj = glm::perspective(glm::radians(45.f), (float)WIDTH / HEIGHT, 0.1f, 100.f);
+        auto proj = glm::perspective(glm::radians(Camera::GetInstance().GetZoom()), double{ kWidth } / kHeight, 0.1, 100.);
 
         glBindVertexArray(vx_array_obj);
 
         // 4) activate program obj; update transform matrices in vertex shader
-        shader_program.use();
-        shader_program.setMatrix4("view", view);
-        shader_program.setMatrix4("proj", proj);
+        shader_program.Use();
+        shader_program.SetMatrix4("view", view);
+        shader_program.SetMatrix4("proj", proj);
         
         // 5) Draw each cube each with a different rotation
         for (int i{}; i < 10; ++i) {
@@ -203,7 +222,7 @@ int main() {
             // angle of rotation, and arbitrary axis. Rotate over time
             float angle{ 20.f * (i + 1) };
             model = glm::rotate(model, (float)glfwGetTime() * glm::radians(angle), glm::vec3{ 1.f, 0.3f, 0.5f });
-            shader_program.setMatrix4("model", model);
+            shader_program.SetMatrix4("model", model);
 
             glDrawArrays(GL_TRIANGLES, 0, 36);
         }
@@ -223,20 +242,44 @@ int main() {
 /* HELPER FUNCTIONS */
 
 // Register callback on window that gets called every time window is resized
-void framebufferSizeCallback(GLFWwindow* window, int width, int height) {
+void FramebufferSizeCallback(GLFWwindow* window, int width, int height) {
     // Tell OpenGL size of rendering viewport
     glViewport(0, 0, width, height);
 }
 
+// Register mouse position callback
+static void MouseCallback(GLFWwindow* window, double x_pos, double y_pos) {
+    Camera::GetInstance().Look(x_pos, y_pos);
+}
+// Register mouse scroll callback
+static void ScrollCallback(GLFWwindow* window, double x_offset, double y_offset) {
+    Camera::GetInstance().Zoom(y_offset);
+}
+
 // Process input during render loop
-void processInput(GLFWwindow* window) {
+void ProcessInput(GLFWwindow* window, double delta_time) {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
         glfwSetWindowShouldClose(window, true);
+    }
+
+    // Camera manipulation
+    Camera& camera{ Camera::GetInstance() };
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+        camera.Move(CameraMove::kForward, delta_time);
+    }
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+        camera.Move(CameraMove::kLeft, delta_time);
+    }
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+        camera.Move(CameraMove::kBackward, delta_time);
+    }
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+        camera.Move(CameraMove::kRight, delta_time);
     }
 }
 
 // load an image into currently bound texture
-unsigned int createTexture2D(GLenum tex_unit, char* filename) {
+unsigned int CreateTexture2D(GLenum tex_unit, char* filename) {
     unsigned int tex;
     glGenTextures(1, &tex);
     // Specify texture unit this image will occupy

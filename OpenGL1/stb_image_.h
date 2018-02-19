@@ -1716,7 +1716,7 @@ typedef struct
     // definition of jpeg image component
     struct
     {
-        int id;
+        int id_;
         int h, v;
         int tq;
         int hd, ha;
@@ -2964,10 +2964,10 @@ static int stbi__process_scan_header(stbi__jpeg *z)
     if (z->scan_n < 1 || z->scan_n > 4 || z->scan_n > (int)z->s->img_n) return stbi__err("bad SOS component count", "Corrupt JPEG");
     if (Ls != 6 + 2 * z->scan_n) return stbi__err("bad SOS len", "Corrupt JPEG");
     for (i = 0; i < z->scan_n; ++i) {
-        int id = stbi__get8(z->s), which;
+        int id_ = stbi__get8(z->s), which;
         int q = stbi__get8(z->s);
         for (which = 0; which < z->s->img_n; ++which)
-            if (z->img_comp[which].id == id)
+            if (z->img_comp[which].id_ == id_)
                 break;
         if (which == z->s->img_n) return 0; // no match
         z->img_comp[which].hd = q >> 4;   if (z->img_comp[which].hd > 3) return stbi__err("bad DC huff", "Corrupt JPEG");
@@ -3039,8 +3039,8 @@ static int stbi__process_frame_header(stbi__jpeg *z, int scan)
     z->rgb = 0;
     for (i = 0; i < s->img_n; ++i) {
         static const unsigned char rgb[3] = { 'R', 'G', 'B' };
-        z->img_comp[i].id = stbi__get8(s);
-        if (s->img_n == 3 && z->img_comp[i].id == rgb[i])
+        z->img_comp[i].id_ = stbi__get8(s);
+        if (s->img_n == 3 && z->img_comp[i].id_ == rgb[i])
             ++z->rgb;
         q = stbi__get8(s);
         z->img_comp[i].h = (q >> 4);  if (!z->img_comp[i].h || z->img_comp[i].h > 4) return stbi__err("bad H", "Corrupt JPEG");

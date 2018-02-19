@@ -10,7 +10,7 @@ Based off example from https://learnopengl.com/Getting-started/Shaders
 
 class Shader {
     // Program id
-    unsigned int id;
+    unsigned int id_;
 public:
     // Prevent any funny business with uninitialized shaders
     Shader() = delete;
@@ -18,13 +18,13 @@ public:
     // Throws exception if file cannot be read
     Shader(const char* vertex_path, const char* frag_path);
     // Use the program maintained by this Shader instance
-    void use() const;
+    void Use() const;
     
     // Functions to modify uniforms
-    void setBool(const char* name, bool val) const;
-    void setInt(const char* name, int val) const;
-    void setFloat(const char* name, float val) const;
-    void setMatrix4(const char* name, glm::mat4 trans);
+    void SetBool(const char* name, bool val) const;
+    void SetInt(const char* name, int val) const;
+    void SetFloat(const char* name, float val) const;
+    void SetMatrix4(const char* name, glm::mat4 trans);
 };
 
 #endif // !SHADER_H

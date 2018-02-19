@@ -62,15 +62,15 @@ Shader::Shader(const char* vertex_path, const char* fragment_path) {
     }
 
     // Finally, link shader program
-    id = glCreateProgram();
-    glAttachShader(id, vertex);
-    glAttachShader(id, fragment);
-    glLinkProgram(id);
+    id_ = glCreateProgram();
+    glAttachShader(id_, vertex);
+    glAttachShader(id_, fragment);
+    glLinkProgram(id_);
 
     // Check for linkage errors
-    glGetProgramiv(id, GL_LINK_STATUS, &success);
+    glGetProgramiv(id_, GL_LINK_STATUS, &success);
     if (!success) {
-        glGetProgramInfoLog(id, 512, nullptr, info_log);
+        glGetProgramInfoLog(id_, 512, nullptr, info_log);
         std::cout << "ERROR [SHADER PROGRAM LINKING FAILED]\n" << info_log << std::endl;
     }
 
@@ -80,20 +80,20 @@ Shader::Shader(const char* vertex_path, const char* fragment_path) {
 }
 
 // Use the program maintained by this Shader instance
-void Shader::use() const { glUseProgram(id); }
+void Shader::Use() const { glUseProgram(id_); }
 
 // Uniform modifiers
-void Shader::setBool(const char* name, bool val) const {
-    setInt(name, val);
+void Shader::SetBool(const char* name, bool val) const {
+    SetInt(name, val);
 }
-void Shader::setInt(const char* name, int val) const {
-    glUniform1i(glGetUniformLocation(id, name), val);
+void Shader::SetInt(const char* name, int val) const {
+    glUniform1i(glGetUniformLocation(id_, name), val);
 }
-void Shader::setFloat(const char* name, float val) const {
-    glUniform1f(glGetUniformLocation(id, name), val);
+void Shader::SetFloat(const char* name, float val) const {
+    glUniform1f(glGetUniformLocation(id_, name), val);
 }
-void Shader::setMatrix4(const char* name, glm::mat4 trans) {
-    glUniformMatrix4fv(glGetUniformLocation(id, name), 1, GL_FALSE, &trans[0][0]);
+void Shader::SetMatrix4(const char* name, glm::mat4 trans) {
+    glUniformMatrix4fv(glGetUniformLocation(id_, name), 1, GL_FALSE, &trans[0][0]);
 }
 
 /* Non-memeber helper implementation */
